@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: multimodal-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: multimodal-worker
+  template:
+    metadata:
+      labels:
+        app: multimodal-worker
+    spec:
+      containers:
+        - name: worker
+          image: multimodal-medical-ai:latest
+          imagePullPolicy: IfNotPresent
+          command: ["celery", "-A", "workers.celery_app.celery_app", "worker", "--loglevel=INFO", "-Q", "analysis"]
+          envFrom:
+            - secretRef:
+                name: multimodal-secrets
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "2"
+              memory: "4Gi"

@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: multimodal-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: multimodal-api
+  template:
+    metadata:
+      labels:
+        app: multimodal-api
+    spec:
+      containers:
+        - name: api
+          image: multimodal-medical-ai:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - secretRef:
+                name: multimodal-secrets
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 20
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "1"
+              memory: "2Gi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: multimodal-api
+spec:
+  selector:
+    app: multimodal-api
+  ports:
+    - port: 80
+      targetPort: 8000
